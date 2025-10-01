@@ -5,7 +5,6 @@ import { FiEdit, FiPlus } from "react-icons/fi";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-// Quill Toolbar Config (extra polish)
 const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -16,16 +15,20 @@ const modules = {
 };
 
 function PostForm({ editId, setEditId, fetchPosts }) {
-  const [post, setPost] = useState({ title: "", content: "" ,image:"" });
+  const [post, setPost] = useState({ title: "", content: "", image: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // agar edit mode hai to purana post data fetch kar lo
+  // Edit mode → fetch existing post data
   useEffect(() => {
     if (editId) {
       (async () => {
         try {
           const res = await API.get(`/api/posts/${editId}`);
-          setPost(res.data);
+          setPost({
+            title: res.data.title || "",
+            content: res.data.content || "",
+            image: null,
+          });
         } catch {
           toast.error("Failed to load post data!");
         }
@@ -33,50 +36,49 @@ function PostForm({ editId, setEditId, fetchPosts }) {
     }
   }, [editId]);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  try {
     if (!post.title || !post.content) {
       toast.error("Please fill in all fields");
       setIsSubmitting(false);
       return;
     }
 
-    
-    const formData = new FormData();
-    formData.append("title", post.title);
-    formData.append("content", post.content);
-    if (post.image) {
-      formData.append("image", post.image);
+    try {
+      const formData = new FormData();
+      formData.append("title", post.title);
+      formData.append("content", post.content);
+      if (post.image) {
+        formData.append("image", post.image);
+      }
+
+      if (editId) {
+        await API.put(`/api/posts/${editId}`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        toast.success("Post updated successfully!");
+        setEditId(null);
+      } else {
+        await API.post("/api/posts", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        toast.success("Post created successfully!");
+      }
+
+      // ✅ Reset form after submit
+      setPost({ title: "", content: "", image: null });
+      fetchPosts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit post!");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    if (editId) {
-      await API.put(`/api/posts/${editId}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success("Post updated successfully!");
-      setEditId(null);
-    } else {
-      await API.post("/api/posts", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      toast.success("Post created successfully!");
-    }
-
-    setPost({ title: "", content: "", image: null });
-    fetchPosts();
-  } catch (err) {
-
-    toast.error(err.response?.data?.message || "Failed to submit post!");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 sticky top-32 ">
+    <div className="bg-white rounded-xl shadow-lg p-6 sticky top-32">
       <div className="flex items-center gap-2 mb-6">
         <div className="p-2 bg-blue-100 rounded-lg">
           <FiPlus className="text-blue-600 text-xl" />
@@ -99,15 +101,17 @@ function PostForm({ editId, setEditId, fetchPosts }) {
 
         {/* Rich Text Editor */}
         <ReactQuill
+          key={post.content === "" ? "empty" : "filled"} // ✅ force reset when cleared
           theme="snow"
           modules={modules}
           value={post.content}
           onChange={(value) => setPost({ ...post, content: value })}
           className="bg-white rounded-lg"
         />
+
+        {/* Image Upload */}
         <input
           type="file"
-          multiple
           accept="image/*"
           onChange={(e) => setPost({ ...post, image: e.target.files[0] })}
           className="w-full border border-gray-300 rounded-lg p-3"
@@ -138,7 +142,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
               type="button"
               onClick={() => {
                 setEditId(null);
-                setPost({ title: "", content: "" ,image:null});
+                setPost({ title: "", content: "", image: null }); // ✅ Clear form on cancel
               }}
               className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
             >
