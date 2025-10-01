@@ -18,7 +18,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
   const [post, setPost] = useState({ title: "", content: "", image: null });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Edit mode → fetch existing post data
+
   useEffect(() => {
     if (editId) {
       (async () => {
@@ -67,7 +67,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
         toast.success("Post created successfully!");
       }
 
-      // ✅ Reset form after submit
+      
       setPost({ title: "", content: "", image: null });
       fetchPosts();
     } catch (err) {
@@ -101,7 +101,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
 
         {/* Rich Text Editor */}
         <ReactQuill
-          key={post.content === "" ? "empty" : "filled"} // ✅ force reset when cleared
+          key={post.content === "" ? "empty" : "filled"} 
           theme="snow"
           modules={modules}
           value={post.content}
@@ -142,7 +142,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
               type="button"
               onClick={() => {
                 setEditId(null);
-                setPost({ title: "", content: "", image: null }); // ✅ Clear form on cancel
+                setPost({ title: "", content: "", image: null }); 
               }}
               className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
             >
