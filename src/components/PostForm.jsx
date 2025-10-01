@@ -138,7 +138,7 @@ function PostForm({ editId, setEditId, fetchPosts }) {
               type="button"
               onClick={() => {
                 setEditId(null);
-                setPost({ title: "", content: "" });
+                setPost({ title: "", content: "" ,image:null});
               }}
               className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all"
             >
